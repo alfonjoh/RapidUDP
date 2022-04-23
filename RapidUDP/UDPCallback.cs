@@ -2,49 +2,70 @@
 
 namespace RapidUDP
 {
-    public class UDPCallback
+    public interface IUDPCallback
     {
-        object CallbackFunc;
+        internal byte[]? Callback(byte[] buff);
+    }
 
-        public UDPCallback(Action<byte[]> action) { CallbackFunc = action; }
-        public UDPCallback(Action<string> action) { CallbackFunc = action; }
-        public UDPCallback(Func<byte[]?> action) { CallbackFunc = action; }
-        public UDPCallback(Func<string?> action) { CallbackFunc = action; }
-        public UDPCallback(Func<byte[], byte[]?> action) { CallbackFunc = action; }
-        public UDPCallback(Func<byte[], string?> action) { CallbackFunc = action; }
-        public UDPCallback(Func<string, byte[]?> action) { CallbackFunc = action; }
-        public UDPCallback(Func<string, string?> action) { CallbackFunc = action; }
+    public class UDPCallback<T> : IUDPCallback where T : class
+    {
+        protected object CallbackFunc;
 
-        internal byte[]? Callback(byte[] buff)
+        public UDPCallback(Action<Package<T>> action) { CallbackFunc = action; }
+
+        public UDPCallback(Func<object?> action) { CallbackFunc = action; }
+
+        public UDPCallback(Func<Package<T>, object?> action) { CallbackFunc = action; }
+
+        byte[]? IUDPCallback.Callback(byte[] buff)
         {
             object? output = null;
-            if (CallbackFunc is Action<byte[]>)
-                ((Action<byte[]>)CallbackFunc)(buff);
-            else if (CallbackFunc is Action<string>)
-                ((Action<string>)CallbackFunc)(Encoding.UTF8.GetString(buff));
-            else if (CallbackFunc is Func<byte[]?>)
-                output = ((Func<byte[]?>)CallbackFunc)();
-            else if (CallbackFunc is Func<string?>)
-                output = ((Func<string?>)CallbackFunc)();
-            else if (CallbackFunc is Func<byte[], string?>)
-                output = ((Func<byte[], string?>)CallbackFunc)(buff);
-            else if (CallbackFunc is Func<string, string?>)
-                output = ((Func<string, string?>)CallbackFunc)(Encoding.UTF8.GetString(buff));
-            else if (CallbackFunc is Func<byte[], byte[]?>)
-                output = ((Func<byte[], byte[]?>)CallbackFunc)(buff);
-            else if (CallbackFunc is Func<string, byte[]?>)
-                output = ((Func<string, byte[]?>)CallbackFunc)(Encoding.UTF8.GetString(buff));
+
+            if (CallbackFunc is Action<Package<T>>)
+                ((Action<Package<T>>)CallbackFunc)(new Package<T>(ref buff));
+            else if (CallbackFunc is Func<object?>)
+                output = ((Func<object?>)CallbackFunc)();
+            else if (CallbackFunc is Func<Package<T>, object?>)
+                output = ((Func<Package<T>, object?>)CallbackFunc)(new Package<T>(ref buff));
 
             if (output == null) return null;
             if (output is byte[])
-            {
                 return (byte[])output;
-            }
-            if (output is string)
-            {
+            else if (output is string)
                 return Encoding.UTF8.GetBytes((string)output);
-            }
-            return null;
+
+            throw new UDPCallBackException("The callback function is not valid");
+        }
+    }
+
+    public class UDPCallback : IUDPCallback
+    {
+        protected object CallbackFunc;
+
+        public UDPCallback(Action<Package> action) { CallbackFunc = action; }
+
+        public UDPCallback(Func<object?> action) { CallbackFunc = action; }
+
+        public UDPCallback(Func<Package, object?> action) { CallbackFunc = action; }
+
+        byte[]? IUDPCallback.Callback(byte[] buff)
+        {
+            object? output = null;
+
+            if (CallbackFunc is Action<Package>)
+                ((Action<Package>)CallbackFunc)(new Package(ref buff));
+            else if (CallbackFunc is Func<object?>)
+                output = ((Func<object?>)CallbackFunc)();
+            else if (CallbackFunc is Func<Package, object?>)
+                output = ((Func<Package, object?>)CallbackFunc)(new Package(ref buff));
+
+            if (output == null) return null;
+            if (output is byte[])
+                return (byte[])output;
+            else if (output is string)
+                return Encoding.UTF8.GetBytes((string)output);
+
+            throw new UDPCallBackException("The callback function is not valid");
         }
     }
 
@@ -52,27 +73,21 @@ namespace RapidUDP
     {
         object CallbackFunc;
 
-        public InitialUDPCallback(Func<byte[]?> action) { CallbackFunc = action; }
-        public InitialUDPCallback(Func<string?> action) { CallbackFunc = action; }
+        public InitialUDPCallback(Func<object?> action) { CallbackFunc = action; }
 
         internal byte[]? Callback()
         {
             object? output = null;
-            if (CallbackFunc is Func<byte?[]>)
-                output = ((Func<byte[]?>)CallbackFunc)();
-            else if (CallbackFunc is Func<string?>)
-                output = ((Func<string?>)CallbackFunc)();
+            if (CallbackFunc is Func<object?>)
+                output = ((Func<object?>)CallbackFunc)();
 
             if (output == null) return null;
             if (output is byte[])
-            {
                 return (byte[])output;
-            }
             if (output is string)
-            {
                 return Encoding.UTF8.GetBytes((string)output);
-            }
-            return null;
+
+            throw new UDPCallBackException("The callback function is not valid");
         }
     }
 

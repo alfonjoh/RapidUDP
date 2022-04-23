@@ -9,7 +9,7 @@ namespace RapidUDP
         private readonly string Host;
         private readonly int Port;
         private UdpClient? client;
-        private List<UDPCallback> Callbacks = new List<UDPCallback>();
+        private List<IUDPCallback> Callbacks = new List<IUDPCallback>();
         private List<InitialUDPCallback> InitialCallbacks = new List<InitialUDPCallback>();
 
 
@@ -20,7 +20,7 @@ namespace RapidUDP
             client = null;
         }
 
-        public void AddCallback(UDPCallback callback)
+        public void AddCallback<T> (UDPCallback<T> callback) where T : class
         {
             Callbacks.Add(callback);
         }
